@@ -1,4 +1,4 @@
-FROM nousresearch/hermes-agent:v2026.8.3
+FROM nousresearch/hermes-agent:latest
 
 # The published image has an s6 `legacy-services` slot that tries to
 # exec /opt/hermes/railway-start.sh (a path baked into the read-only
