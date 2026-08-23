@@ -20,4 +20,4 @@ RUN chmod +x /etc/cont-init.d/00-disable-legacy-services.sh
 COPY start.sh /opt/hermes/railway-start.sh.disabled
 RUN chmod +x /opt/hermes/railway-start.sh.disabled || true
 
-CMD ["/opt/hermes/docker/entrypoint-dispatch.sh", "sleep", "infinity"]
+CMD ["/opt/hermes/docker/entrypoint-dispatch.sh", "sleep", "infinity"]# Force rebuild Mon, Aug 24, 2026  3:04:10 AM
