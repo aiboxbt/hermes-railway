@@ -1,22 +1,20 @@
 FROM nousresearch/hermes-agent:v2026.8.3
 
-# The published image on Docker Hub has a stray s6 `legacy-services`
-# slot whose run script exec's /opt/hermes/railway-start.sh — a path
-# that lives in the read-only image layer and never exists. When that
-# slot fails, s6 cascades and brings main-hermes + dashboard down too.
+# The published image on Docker Hub has an s6 `legacy-services` slot
+# that exec's /opt/hermes/railway-start.sh. That path lives in the
+# read-only image layer, so the file never exists and the slot's
+# failure cascades through s6, killing main-hermes + dashboard.
 #
-# Rather than chase the slot through s6-rc internals, we bypass s6
-# entirely: we exec the gateway directly as PID 1 and let `sleep
-# infinity` keep the container alive. This trades away s6's
-# auto-restart supervision, but matches what the original Railway
-# template intended: a single foreground process the platform can
-# monitor. The dashboard HTTP service is NOT started by this entrypoint
-# because the gateway's messaging stack is the primary concern;
-# operators who need the WebUI should run it as a separate Railway
-# service on a sibling container, or build a custom image that
-# addresses the upstream slot properly.
+# Layered "fix": the source layer is read-only, but our COPY below
+# adds a new layer ON TOP of it that creates /opt/hermes/railway-start.sh
+# in the writable container layer (Docker unionfs). The slot then finds
+# the file and succeeds.
+#
+# Note: /opt/hermes is `go-w` for non-root but COPY runs as root and
+# creates the file owned by root. The hermes user can then read+execute
+# it (the path retains `a+rX` from the source chmod).
 
-COPY start.sh /usr/local/bin/railway-start.sh
-RUN chmod +x /usr/local/bin/railway-start.sh
+COPY start.sh /opt/hermes/railway-start.sh
+RUN chmod +x /opt/hermes/railway-start.sh
 
-CMD ["/usr/local/bin/railway-start.sh"]
+CMD ["/opt/hermes/railway-start.sh"]
