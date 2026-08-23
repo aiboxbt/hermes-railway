@@ -1,6 +1,8 @@
 FROM nousresearch/hermes-agent:v2026.8.3
 
-COPY start.sh /opt/hermes/railway-start.sh
-RUN chmod +x /opt/hermes/railway-start.sh
+# /opt/hermes is baked read-only by the upstream image (go-w), so copy the
+# entrypoint script to a writable system location instead.
+COPY start.sh /usr/local/bin/railway-start.sh
+RUN chmod +x /usr/local/bin/railway-start.sh
 
-CMD ["/opt/hermes/railway-start.sh"]
+CMD ["/usr/local/bin/railway-start.sh"]
