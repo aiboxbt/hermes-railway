@@ -6,18 +6,11 @@ FROM nousresearch/hermes-agent:v2026.8.3
 # service brings the whole s6 tree down (including main-hermes and
 # dashboard). Patch the slot to be a no-op before s6 starts.
 #
-# Strategy: add our own cont-init script that runs FIRST (using a numeric
-# prefix lower than 01-hermes-setup) and replaces legacy-services/run with
-# a benign command. Then exec the normal entrypoint so s6 supervision
-# works as designed.
-COPY disable-legacy.sh /etc/cont-init.d/000-disable-legacy-services.sh
-RUN chmod +x /etc/cont-init.d/000-disable-legacy-services.sh
+# Strategy: replace the slot's run script with a no-op in-place. The
+# image's stage2-hook.sh runs after stage2 (which mkdir /opt/data and
+# sync skills), but BEFORE s6-rc services start. So patching the slot
+# in the COPY below means the patched version is the one s6-rc runs.
+COPY disable-legacy.sh /etc/s6-overlay/s6-rc.d/legacy-services/run
+RUN chmod +x /etc/s6-overlay/s6-rc.d/legacy-services/run
 
-# We don't need the start.sh + bind-mount workaround anymore — leaving
-# the original Shinyduo start.sh present for completeness in case a
-# user wants to reference it, but the CMD now just exec's the standard
-# entrypoint with `sleep infinity` so s6 owns the lifecycle.
-COPY start.sh /opt/hermes/railway-start.sh.disabled
-RUN chmod +x /opt/hermes/railway-start.sh.disabled || true
-
-CMD ["/opt/hermes/docker/entrypoint-dispatch.sh", "sleep", "infinity"]# Force rebuild Mon, Aug 24, 2026  3:04:10 AM
+CMD ["/opt/hermes/docker/entrypoint-dispatch.sh", "sleep", "infinity"]
