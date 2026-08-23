@@ -6,12 +6,12 @@ FROM nousresearch/hermes-agent:v2026.8.3
 # service brings the whole s6 tree down (including main-hermes and
 # dashboard). Patch the slot to be a no-op before s6 starts.
 #
-# Strategy: add our own cont-init script that runs FIRST (sorted before
-# 01-hermes-setup) and replaces legacy-services/run with a benign
-# command. Then exec the normal entrypoint so s6 supervision works as
-# designed.
-COPY disable-legacy.sh /etc/cont-init.d/00-disable-legacy
-RUN chmod +x /etc/cont-init.d/00-disable-legacy
+# Strategy: add our own cont-init script that runs FIRST (using a numeric
+# prefix lower than 01-hermes-setup) and replaces legacy-services/run with
+# a benign command. Then exec the normal entrypoint so s6 supervision
+# works as designed.
+COPY disable-legacy.sh /etc/cont-init.d/00-disable-legacy-services.sh
+RUN chmod +x /etc/cont-init.d/00-disable-legacy-services.sh
 
 # We don't need the start.sh + bind-mount workaround anymore — leaving
 # the original Shinyduo start.sh present for completeness in case a
